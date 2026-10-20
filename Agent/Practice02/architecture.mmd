@@ -1,0 +1,54 @@
+flowchart TD
+    %% ===== 配置加载层 =====
+    A[config.ini] --> B["configparser 读取配置"]
+    B --> C["url / api_key / model"]
+
+    %% ===== 主对话循环 =====
+    START["启动: 打印提示"] --> LOOP["循环: input 用户输入"]
+    LOOP --> ADD_USER["追加 user 消息到 messages"]
+    ADD_USER --> REQ1["阶段1: 非流式 POST<br/>messages + tools 定义"]
+    C --> REQ1
+    REQ1 --> CHECK{"响应含 tool_calls?"}
+
+    %% ===== 工具调用分支 =====
+    CHECK -- "是" --> ADD_TC["追加 assistant 消息(含 tool_calls)"]
+    ADD_TC --> EACH["遍历每个 tool_call"]
+    EACH --> EXEC["TOOL_MAP 按名称查找并执行"]
+    EXEC --> TRY{"执行成功?"}
+    TRY -- "否" --> ERR["捕获异常, 返回错误字符串"]
+    TRY -- "是" --> OK["返回结果字符串"]
+    ERR --> ADD_TOOL["追加 tool 消息(结果)"]
+    OK --> ADD_TOOL
+    ADD_TOOL --> REQ2["阶段2: 流式 POST<br/>stream=True"]
+    REQ2 --> PARSE["解析 SSE 增量 delta"]
+    PARSE --> TYPE["逐字符打印<br/>打字机 0.03s/字"]
+    TYPE --> ADD_AI["追加 assistant 回复到 messages"]
+    ADD_AI --> LOOP
+
+    %% ===== 无工具调用分支 =====
+    CHECK -- "否" --> CONTENT["直接取 content"]
+    CONTENT --> TYPE
+
+    %% ===== 工具定义层 =====
+    subgraph TOOLBOX["工具层 (TOOLS 声明 + TOOL_MAP 分发)"]
+        direction TB
+        subgraph T_DATETIME["日期时间类"]
+            T1["getDate: 本地 date / time 命令"]
+        end
+        subgraph T_MATH["数学计算类"]
+            T2["isLeapYear: 闰年判断"]
+        end
+        subgraph T_FILE["文件操作类"]
+            T3["getCwd: 获取当前工作目录"]
+            T4["listDir: 列出目录内容"]
+            T5["getFileType: 获取文件类型"]
+            T6["readFile: 读取纯文本文件"]
+            T7["createFile: 创建新文件"]
+            T8["editFile: 编辑文本内容"]
+            T9["createDir: 创建新目录"]
+            T10["deleteDir: 删除目录(非空)"]
+            T11["deleteFile: 删除文件"]
+            T12["rename: 重命名文件/目录"]
+        end
+    end
+    EXEC -. "按工具名分发" .-> TOOLBOX
