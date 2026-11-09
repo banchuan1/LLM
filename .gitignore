@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 虚拟环境与构建产物
+.venv/
+venv/
+build/
+dist/
+*.spec.bak
+
+# 可执行文件（发布走 Release，不入库）
+*.exe
+*.exe.old
+
+# 密钥与本地配置（含 API Key，禁止入库）
+config.ini
+.env
+.mcp.json
+!.mcp.json.example
+
+# Agent 运行时数据（会话、上下文归档）
+**/.agents/context/
+**/.agents/sessions/
+
+# 打包工具残留
+.unifypy/
+.unifypy_rollback/
+
+# 本地临时工作目录
+_work/

@@ -12,9 +12,11 @@
   .ws { font-size: 13px; color: #6b7280; background: #f3f4f6; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px; word-break: break-all; }
   .ws b { color: #111827; }
   label { display:block; font-size: 13px; color:#374151; margin-bottom: 6px; }
-  input[type=file] { width: 100%; font-size: 13px; margin-bottom: 14px; }
+  input[type=file], input[type=text], input[type=password] { width: 100%; font-size: 13px; margin-bottom: 14px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+  input[type=file] { padding: 6px; }
   button { width: 100%; padding: 10px 14px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
   button:disabled { background: #9ca3af; cursor: not-allowed; }
+  button.secondary { background: #e5e7eb; color: #111827; margin-bottom: 14px; }
   #result { margin-top: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
   .ok { color: #047857; }
   .err { color: #b91c1c; }
@@ -24,28 +26,60 @@
 <body>
   <div class="card">
     <h1>文档上传与向量化嵌入</h1>
-    <div id="ws" class="ws">正在获取工作区…</div>
+
+    <label for="base">AnythingLLM 服务地址</label>
+    <input id="base" type="text" placeholder="http://localhost:3001/api">
+
+    <label for="key">API Key（仅保存在本机浏览器，不写进源码）</label>
+    <input id="key" type="password" placeholder="粘贴 AnythingLLM API Key">
+
+    <button id="connect" class="secondary">连接并获取工作区</button>
+
+    <div id="ws" class="ws">尚未连接</div>
+
     <label for="file">选择文档文件</label>
     <input id="file" type="file" disabled>
     <button id="btn" disabled>上传并嵌入</button>
     <div id="result"></div>
-    <p class="muted">仅本地演示用：API Key 内嵌于页面。</p>
+    <p class="muted">地址与 Key 保存在浏览器 localStorage，可在下方清除。</p>
+    <button id="forget" class="secondary">清除已保存的地址与 Key</button>
   </div>
 
 <script>
-const API_BASE = "http://localhost:3001/api";
-const API_KEY = "PMKKAJG-TZ9MCFM-Q028HXJ-806T09R";
-const headers = { Authorization: "Bearer " + API_KEY };
+const $ = (id) => document.getElementById(id);
+const wsBox = $("ws");
+const fileInput = $("file");
+const btn = $("btn");
+const result = $("result");
+const baseInput = $("base");
+const keyInput = $("key");
 
-const wsBox = document.getElementById("ws");
-const fileInput = document.getElementById("file");
-const btn = document.getElementById("btn");
-const result = document.getElementById("result");
 let workspaceSlug = null;
 
+// 恢复上次填写的地址与 Key（仅本机 localStorage）
+baseInput.value = localStorage.getItem("anythingllm_base") || "http://localhost:3001/api";
+keyInput.value = localStorage.getItem("anythingllm_key") || "";
+
+function headers() {
+  return { Authorization: "Bearer " + keyInput.value.trim() };
+}
+
+function apiBase() {
+  return baseInput.value.trim().replace(/\/+$/, "");
+}
+
 async function loadWorkspace() {
+  const base = apiBase();
+  const key = keyInput.value.trim();
+  if (!base || !key) {
+    wsBox.innerHTML = '<span class="err">请先填写服务地址与 API Key</span>';
+    return;
+  }
+  localStorage.setItem("anythingllm_base", base);
+  localStorage.setItem("anythingllm_key", key);
+  wsBox.textContent = "正在获取工作区…";
   try {
-    const res = await fetch(API_BASE + "/v1/workspaces", { headers });
+    const res = await fetch(base + "/v1/workspaces", { headers: headers() });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     const ws = (data.workspaces || [])[0];
@@ -59,6 +93,15 @@ async function loadWorkspace() {
   }
 }
 
+$("connect").addEventListener("click", loadWorkspace);
+
+$("forget").addEventListener("click", () => {
+  localStorage.removeItem("anythingllm_base");
+  localStorage.removeItem("anythingllm_key");
+  keyInput.value = "";
+  wsBox.textContent = "已清除，可重新填写";
+});
+
 btn.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) { result.innerHTML = '<span class="err">请先选择文件</span>'; return; }
@@ -69,7 +112,7 @@ btn.addEventListener("click", async () => {
     const fd = new FormData();
     fd.append("file", file);
     fd.append("addToWorkspaces", workspaceSlug);
-    const res = await fetch(API_BASE + "/v1/document/upload", { method: "POST", headers, body: fd });
+    const res = await fetch(apiBase() + "/v1/document/upload", { method: "POST", headers: headers(), body: fd });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) {
       throw new Error(data.error || data.reason || ("HTTP " + res.status));
@@ -92,8 +135,6 @@ btn.addEventListener("click", async () => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
-
-loadWorkspace();
 </script>
 </body>
 </html>

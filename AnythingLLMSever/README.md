@@ -13,8 +13,8 @@
 
 | 项 | 值 |
 | --- | --- |
-| AnythingLLM 服务地址 | `http://localhost:3001/api` |
-| API Key | `PMKKAJG-TZ9MCFM-Q028HXJ-806T09R`（内嵌于页面） |
+| AnythingLLM 服务地址 | `http://localhost:3001/api`（页面可改） |
+| API Key | 页面内输入，仅存本机 `localStorage`，不写入源码 |
 | Python（用于托管页面） | 3.x（内置 `http.server`，零依赖） |
 
 AnythingLLM 服务须在本机 `localhost:3001` 运行，且至少存在一个工作区。
@@ -57,7 +57,7 @@ http://localhost:8080/upload.html
 
 ```
 GET http://localhost:3001/api/v1/workspaces
-Authorization: Bearer PMKKAJG-TZ9MCFM-Q028HXJ-806T09R
+Authorization: Bearer <你的-AnythingLLM-API-Key>
 ```
 
 响应：`{ workspaces: [{ id, name, slug, ... }] }`，页面取 `workspaces[0]`。
@@ -66,7 +66,7 @@ Authorization: Bearer PMKKAJG-TZ9MCFM-Q028HXJ-806T09R
 
 ```
 POST http://localhost:3001/api/v1/document/upload
-Authorization: Bearer PMKKAJG-TZ9MCFM-Q028HXJ-806T09R
+Authorization: Bearer <你的-AnythingLLM-API-Key>
 Content-Type: multipart/form-data（浏览器自动带 boundary）
 
 字段：
@@ -108,4 +108,4 @@ D:\llm\AnythingLLMSever\
 
 ## 安全提示
 
-API Key 写在前端 JS 中（`upload.html` 第 37 行），页内可见。本场景为**本地单机演示**，可接受。若需对外暴露，应改为后端代理，由服务端持有 Key 并转发请求，不应将 Key 暴露到浏览器。
+API Key 不再写在前端代码里：页面首次使用时由输入框填写，保存在本机 `localStorage`，可点"清除已保存的地址与 Key"删除。`localStorage` 仍属浏览器本地存储，同一台机器上的其他网页无法读取本页 key（同源策略），但**不要在公共电脑上填写**。若需对外暴露该页面，应改为后端代理，由服务端持有 Key 并转发请求。
