@@ -22,7 +22,11 @@ pip install -r requirements.txt
 
 ## 配置
 
-编辑 [.env](./.env)：
+复制模板并填入自己的值（`.env` 已被 `.gitignore` 排除，不会入库）：
+
+```bash
+cp .env.example .env
+```
 
 ```env
 ANYTHINGLLM_BASE_URL=http://localhost:3001/api
