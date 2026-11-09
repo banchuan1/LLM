@@ -1,0 +1,31 @@
+{
+  "entry": "main.py",
+  "name": "LLM-Agent",
+  "display_name": "LLM-Agent",
+  "version": "1.0.0",
+  "publisher": "Student",
+  "description": "An LLM Agent demo",
+  "icon": "none",
+  "pyinstaller": {
+    "onefile": false,
+    "windowed": false,
+    "add_data": [
+      "nagent:nagent"
+    ],
+    "clean": true,
+    "noconfirm": true
+  },
+  "platforms": {
+    "windows": {
+      "inno_setup": {
+        "create_desktop_icon": true,
+        "create_start_menu_icon": true,
+        "allow_run_after_install": true,
+        "languages": [
+          "english",
+          "chinesesimplified"
+        ]
+      }
+    }
+  }
+}

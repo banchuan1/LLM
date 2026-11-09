@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "example-stdio": {
+      "command": "python",
+      "args": ["-m", "your_mcp_server_module"],
+      "env": {
+        "SOME_VAR": "value"
+      }
+    },
+    "example-http": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer your-token"
+      }
+    }
+  }
+}
